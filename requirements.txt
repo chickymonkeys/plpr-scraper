@@ -2,6 +2,6 @@
 requests
 lxml
 normality
-dataset
+# dataset
 
-git+https://github.com/bundestag/normdatei
+git+https://github.com/chickymonkeys/normdatei

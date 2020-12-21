@@ -3,9 +3,9 @@ import os
 import re
 import logging
 import requests
-import dataset
+# import dataset
 from lxml import html
-from urlparse import urljoin
+from urllib.parse import urljoin
 from normdatei.text import clean_text, clean_name, fingerprint
 from normdatei.parties import search_party_names
 
@@ -19,7 +19,8 @@ OUT_DIR = os.path.join(DATA_PATH, 'out')
 INDEX_URL = 'https://www.bundestag.de/plenarprotokolle'
 ARCHIVE_URL = 'http://webarchiv.bundestag.de/archive/2013/0927/dokumente/protokolle/plenarprotokolle/plenarprotokolle/17%03.d.txt'
 
-CHAIRS = [u'Vizepräsidentin', u'Vizepräsident', u'Präsident', u'Präsidentin', u'Alterspräsident', u'Alterspräsidentin']
+CHAIRS = [u'Vizepräsidentin', u'Vizepräsident', u'Präsident',
+          u'Präsidentin', u'Alterspräsident', u'Alterspräsidentin']
 
 SPEAKER_STOPWORDS = ['ich zitiere', 'zitieren', 'Zitat', 'zitiert',
                      'ich rufe den', 'ich rufe die',
@@ -28,20 +29,24 @@ SPEAKER_STOPWORDS = ['ich zitiere', 'zitieren', 'Zitat', 'zitiert',
                      'Darin steht', ' Aspekte ', ' Punkte ', 'Berichtszeitraum']
 
 BEGIN_MARK = re.compile('Beginn: [X\d]{1,2}.\d{1,2} Uhr')
-END_MARK = re.compile('(\(Schluss:.\d{1,2}.\d{1,2}.Uhr\).*|Schluss der Sitzung)')
+END_MARK = re.compile(
+    '(\(Schluss:.\d{1,2}.\d{1,2}.Uhr\).*|Schluss der Sitzung)')
 SPEAKER_MARK = re.compile('  (.{5,140}):\s*$')
-TOP_MARK = re.compile('.*(rufe.*die Frage|zur Frage|der Tagesordnung|Tagesordnungspunkt|Zusatzpunkt).*')
+TOP_MARK = re.compile(
+    '.*(rufe.*die Frage|zur Frage|der Tagesordnung|Tagesordnungspunkt|Zusatzpunkt).*')
 POI_MARK = re.compile('\((.*)\)\s*$', re.M)
 WRITING_BEGIN = re.compile('.*werden die Reden zu Protokoll genommen.*')
-WRITING_END = re.compile(u'(^Tagesordnungspunkt .*:\s*$|– Drucksache d{2}/\d{2,6} –.*|^Ich schließe die Aussprache.$)')
+WRITING_END = re.compile(
+    u'(^Tagesordnungspunkt .*:\s*$|– Drucksache d{2}/\d{2,6} –.*|^Ich schließe die Aussprache.$)')
 
 # POI_PREFIXES = re.compile(u'(Ge ?genruf|Weiterer Zuruf|Zuruf|Weiterer)( de[sr] (Abg.|Staatsministers|Bundesministers|Parl. Staatssekretärin))?')
 # REM_CHAIRS = '|'.join(CHAIRS)
 # NAME_REMOVE = re.compile(u'(\\[.*\\]|\\(.*\\)|%s|^Abg.? |Liedvortrag|Bundeskanzler(in)?|, zur.*|, auf die| an die|, an .*|, Parl\\. .*|gewandt|, Staatsmin.*|, Bundesmin.*|, Ministe.*)' % REM_CHAIRS, re.U)
 
-db = os.environ.get('DATABASE_URI', 'sqlite:///data.sqlite')
-eng = dataset.connect(db)
-table = eng['de_bundestag_plpr']
+# Save in XML Files instead of sqlite
+# db = os.environ.get('DATABASE_URI', 'sqlite:///data.sqlite')
+# eng = dataset.connect(db)
+# table = eng['de_bundestag_plpr']
 
 
 class SpeechParser(object):
@@ -76,7 +81,7 @@ class SpeechParser(object):
             }
             if reset_chair:
                 chair_[0] = False
-            [text.pop() for i in xrange(len(text))]
+            [text.pop() for i in range(len(text))]
             return data
 
         for line in self.lines:
@@ -95,7 +100,7 @@ class SpeechParser(object):
                 in_writing = True
 
             if WRITING_END.match(rline):
-                in_writing = False
+                in_writing = Falsenormalize
 
             if not len(rline):
                 continue
@@ -149,14 +154,14 @@ def parse_transcript(filename):
     wp, session = file_metadata(filename)
     with open(filename, 'rb') as fh:
         text = clean_text(fh.read())
-    table.delete(wahlperiode=wp, sitzung=session)
+    # table.delete(wahlperiode=wp, sitzung=session)
 
     base_data = {
         'filename': filename,
         'sitzung': session,
         'wahlperiode': wp
     }
-    print "Loading transcript: %s/%.3d, from %s" % (wp, session, filename)
+    print("Loading transcript: %s/%.3d, from %s" % (wp, session, filename))
     seq = 0
     parser = SpeechParser(text.split('\n'))
 
@@ -167,13 +172,13 @@ def parse_transcript(filename):
         contrib['speaker_fp'] = fingerprint(contrib['speaker_cleaned'])
         contrib['speaker_party'] = search_party_names(contrib['speaker'])
         seq += 1
-        table.insert(contrib)
+        # table.insert(contrib)
 
     q = '''SELECT * FROM data WHERE wahlperiode = :w AND sitzung = :s
             ORDER BY sequence ASC'''
     fcsv = os.path.basename(filename).replace('.txt', '.csv')
-    rp = eng.query(q, w=wp, s=session)
-    dataset.freeze(rp, filename=fcsv, prefix=OUT_DIR, format='csv')
+    # rp = eng.query(q, w=wp, s=session)
+    # dataset.freeze(rp, filename=fcsv, prefix=OUT_DIR, format='csv')
 
 
 def fetch_protokolle():
@@ -206,7 +211,7 @@ def fetch_protokolle():
             with open(txt_file, 'wb') as fh:
                 fh.write(r.content)
 
-            print url, txt_file
+            print(url, txt_file)
 
 
 if __name__ == '__main__':
